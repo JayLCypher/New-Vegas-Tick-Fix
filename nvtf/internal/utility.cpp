@@ -2,23 +2,22 @@
 #include "internal/utility.h"
 #include "internal/md5/md5.h"
 #include "internal/sha1/sha1.h"
-#include <time.h>
+#include <ctime>
 
-const UInt32 kMaxMessageLength = 0x4000;
+constexpr unsigned long FAST_SLEEP_COUNT = 10000UL;
+constexpr UInt32 kMaxMessageLength = 0x4000;
 void LightCS::Enter() {
-	UInt32 threadID = GetCurrentThreadId();
+	const UInt32 threadID = GetCurrentThreadId();
 	if (owningThread == threadID) {
 		enterCount++;
 		return;
 	}
-	while (InterlockedCompareExchange(&owningThread, threadID, 0));
+	while (InterlockedCompareExchange(&owningThread, threadID, 0)) { }
 	enterCount = 1;
 }
 
-#define FAST_SLEEP_COUNT 10000UL
-
 void LightCS::EnterSleep() {
-	UInt32 threadID = GetCurrentThreadId();
+	const UInt32 threadID = GetCurrentThreadId();
 	if (owningThread == threadID) {
 		enterCount++;
 		return;
@@ -29,22 +28,19 @@ void LightCS::EnterSleep() {
 			fastIdx--;
 			Sleep(0);
 		}
-		else Sleep(1);
+		else { Sleep(1); }
 	}
 	enterCount = 1;
 }
 
-void LightCS::Leave() {
-	if (!--enterCount)
-		owningThread = 0;
-}
+void LightCS::Leave() { if (!--enterCount) { owningThread = 0; } }
+
 bool fCompare(float lval, float rval) {
-	return fabs(lval - rval) < FLT_EPSILON;
+	return fabs((static_cast<double>(lval) - static_cast<double>(rval))) < FLT_EPSILON;
 }
 
 __declspec(naked) int __stdcall lfloor(float value) {
-	__asm
-	{
+	__asm {
 		fld		dword ptr[esp + 4]
 		fstcw[esp + 4]
 		mov		dx, [esp + 4]
@@ -59,8 +55,7 @@ __declspec(naked) int __stdcall lfloor(float value) {
 }
 
 __declspec(naked) int __stdcall lceil(float value) {
-	__asm
-	{
+	__asm {
 		fld		dword ptr[esp + 4]
 		fstcw[esp + 4]
 		mov		dx, [esp + 4]
@@ -98,12 +93,10 @@ double cos_p(double angle) {
 }
 
 double dCos(double angle) {
-	if (angle < 0) angle = -angle;
-	while (angle > kDblPIx2)
-		angle -= kDblPIx2;
+	if (angle < 0) { angle = -angle; }
+	while (angle > kDblPIx2) { angle -= kDblPIx2; }
 
-	int quad = int(angle * kDbl2dPI);
-	switch (quad) {
+	switch (static_cast<int>(angle * kDbl2dPI)) {
 		case 0:
 			return cos_p(angle);
 		case 1:
@@ -115,22 +108,18 @@ double dCos(double angle) {
 	}
 }
 
-double dSin(double angle) {
-	return dCos(kDblPId2 - angle);
-}
+double dSin(const double angle) { return dCos(kDblPId2 - angle); }
 
 double tan_p(double angle) {
 	angle *= kDbl4dPI;
-	double ang2 = angle * angle;
+	const double ang2 = angle * angle;
 	return angle * (211.849369664121 - 12.5288887278448 * ang2) / (269.7350131214121 + ang2 * (ang2 - 71.4145309347748));
 }
 
 double dTan(double angle) {
-	while (angle > kDblPIx2)
-		angle -= kDblPIx2;
+	while (angle > kDblPIx2) { angle -= kDblPIx2; }
 
-	int octant = int(angle * kDbl4dPI);
-	switch (octant) {
+	switch (static_cast<int>(angle * kDbl4dPI)) {
 		case 0:
 			return tan_p(angle);
 		case 1:
@@ -151,29 +140,27 @@ double dTan(double angle) {
 }
 
 double dAtan(double value) {
-	bool sign = (value < 0);
-	if (sign) value = -value;
+	const bool sign = (value < 0);
+	if (sign) { value = -value; }
 
-	bool complement = (value > 1.0);
-	if (complement) value = 1.0 / value;
+	const bool complement = (value > 1.0);
+	if (complement) { value = 1.0 / value; }
 
-	bool region = (value > kDblTanPId12);
-	if (region)
-		value = (value - kDblTanPId6) / (1.0 + kDblTanPId6 * value);
+	const bool region = (value > kDblTanPId12);
+	if (region) { value = (value - kDblTanPId6) / (1.0 + kDblTanPId6 * value); }
 
 	double res = value;
 	value *= value;
 	res *= (1.6867629106 + value * 0.4378497304) / (1.6867633134 + value);
 
-	if (region) res += kDblPId6;
-	if (complement) res = kDblPId2 - res;
+	if (region) { res += kDblPId6; }
+	if (complement) { res = kDblPId2 - res; }
 
 	return sign ? -res : res;
 }
 
 double dAsin(double value) {
-	__asm
-	{
+	__asm {
 		fld		value
 		fld		st
 		fmul	st, st
@@ -186,50 +173,44 @@ double dAsin(double value) {
 	return dAtan(value);
 }
 
-double dAcos(double value) {
-	return kDblPId2 - dAsin(value);
-}
+double dAcos(const double value) { return kDblPId2 - dAsin(value); }
 
-double dAtan2(double y, double x) {
-	if (x != 0) {
-		double z = y / x;
-		if (x > 0)
-			return dAtan(z);
-		else if (y < 0)
-			return dAtan(z) - kDblPI;
-		else
-			return dAtan(z) + kDblPI;
+double dAtan2(const double y, const double x) {
+	if (x != 0.0) {
+		const double z = y / x;
+		if (x > 0) { return dAtan(z); }
+		if (y < 0) { return dAtan(z) - kDblPI; }
+
+		return dAtan(z) + kDblPI;
 	}
-	else if (y > 0)
-		return kDblPId2;
-	else if (y < 0)
-		return -kDblPId2;
+	if (y > 0) { return kDblPId2; }
+	if (y < 0) { return -kDblPId2; }
+
 	return 0;
 }
 
 UInt32 __fastcall GetNextPrime(UInt32 num) {
 	if (num <= 2) return 2;
-	else if (num == 3) return 3;
-	UInt32 a = num / 6, b = num - (6 * a), c = (b < 2) ? 1 : 5, d;
+	if (num == 3) return 3;
+	UInt32 a = num / 6, b = num - (6 * a), c = (b < 2) ? 1 : 5;
 	num = (6 * a) + c;
 	a = (3 + c) / 2;
 	do {
 		b = 4;
 		c = 5;
 		do {
-			d = num / c;
+			const UInt32 d = num / c;
 			if (c > d) return num;
-			if (num == (c * d)) break;
+			if (num == c * d) break;
 			c += b ^= 6;
 		} while (true);
 		num += a ^= 6;
 	} while (true);
-	return num;
+	return num; // Unreachable
 }
 
 __declspec(naked) UInt32 __fastcall RGBHexToDec(UInt32 rgb) {
-	__asm
-	{
+	__asm {
 		movzx	eax, cl
 		imul	eax, 0xF4240
 		movzx	edx, ch
@@ -242,8 +223,7 @@ __declspec(naked) UInt32 __fastcall RGBHexToDec(UInt32 rgb) {
 }
 
 __declspec(naked) UInt32 __fastcall RGBDecToHex(UInt32 rgb) {
-	__asm
-	{
+	__asm {
 		push	ebx
 		mov		eax, ecx
 		mov		ecx, 0xF4240
@@ -264,8 +244,7 @@ __declspec(naked) UInt32 __fastcall RGBDecToHex(UInt32 rgb) {
 }
 
 __declspec(naked) UInt32 __fastcall StrLen(const char* str) {
-	__asm
-	{
+	__asm {
 		mov		eax, ecx
 		test	ecx, ecx
 		jz		done
@@ -281,8 +260,7 @@ __declspec(naked) UInt32 __fastcall StrLen(const char* str) {
 }
 
 __declspec(naked) char* __fastcall StrEnd(const char* str) {
-	__asm
-	{
+	__asm {
 		mov		eax, ecx
 		test	ecx, ecx
 		jz		done
@@ -297,8 +275,7 @@ __declspec(naked) char* __fastcall StrEnd(const char* str) {
 }
 
 __declspec(naked) bool __fastcall MemCmp(const void* ptr1, const void* ptr2, UInt32 bsize) {
-	__asm
-	{
+	__asm {
 		push	ebx
 		mov		ebx, [esp + 8]
 		iterHead:
@@ -320,8 +297,7 @@ __declspec(naked) bool __fastcall MemCmp(const void* ptr1, const void* ptr2, UIn
 }
 
 __declspec(naked) void __fastcall MemZero(void* dest, UInt32 bsize) {
-	__asm
-	{
+	__asm {
 		test	ecx, ecx
 		jz		done
 		pxor	xmm0, xmm0
@@ -352,8 +328,7 @@ __declspec(naked) void __fastcall MemZero(void* dest, UInt32 bsize) {
 void* (__cdecl* _memcpy)(void* destination, const void* source, size_t num) = memcpy;
 
 __declspec(naked) char* __fastcall StrCopy(char* dest, const char* src) {
-	__asm
-	{
+	__asm {
 		push	ebx
 		mov		eax, ecx
 		test	ecx, ecx
@@ -382,8 +357,7 @@ __declspec(naked) char* __fastcall StrCopy(char* dest, const char* src) {
 }
 
 __declspec(naked) char* __fastcall StrNCopy(char* dest, const char* src, UInt32 length) {
-	__asm
-	{
+	__asm {
 		push	ebx
 		mov		eax, ecx
 		test	ecx, ecx
@@ -414,8 +388,7 @@ __declspec(naked) char* __fastcall StrNCopy(char* dest, const char* src, UInt32 
 }
 
 __declspec(naked) char* __fastcall StrCat(char* dest, const char* src) {
-	__asm
-	{
+	__asm {
 		call	StrEnd
 		mov		ecx, eax
 		call	StrCopy
@@ -1305,29 +1278,26 @@ void GetSHA1File(const char* filePath, char* outHash) {
 
 	SHA1 sha;
 
-	HANDLE handle = sourceFile.GetHandle();
-
-	char buffer[0x400];
+	const HANDLE handle = sourceFile.GetHandle();
 	UInt32 offset = 0, length;
 
 	while (!sourceFile.HitEOF()) {
-		ReadFile(handle, buffer, 0x400, &length, NULL);
+		char buffer[0x400];
+		ReadFile(handle, buffer, 0x400, &length, nullptr);
 		offset += length;
 		sourceFile.SetOffset(offset);
 		sha.addBytes(buffer, length);
 	}
-	unsigned char* digest = sha.getDigest();
+	const unsigned char* digest = sha.getDigest();
 
-	for (UInt8 idx = 0; idx < 0x14; idx++, outHash += 2)
-		sprintf_s(outHash, 3, "%02X", digest[idx]);
+	for (UInt8 idx = 0; idx < 0x14; idx++, outHash += 2) { if (!sprintf_s(outHash, 3, "%02X", digest[idx])) { return; } }
 }
 
 // Taken from xNVSE
-UInt8* GetParentBasePtr(void* addressOfReturnAddress, bool lambda) {
+UInt8* GetParentBasePtr(void* addressOfReturnAddress, const bool lambda) {
 	auto* basePtr = static_cast<UInt8*>(addressOfReturnAddress) - 4;
 #if _DEBUG
-	if (lambda) // in debug mode, lambdas are wrapped inside a closure wrapper function, so one more step needed
-		basePtr = *reinterpret_cast<UInt8**>(basePtr);
+	if (lambda) { basePtr = *reinterpret_cast<UInt8**>(basePtr); } // in debug mode, lambdas are wrapped inside a closure wrapper function, so one more step needed
 #endif
 	return *reinterpret_cast<UInt8**>(basePtr);
 }

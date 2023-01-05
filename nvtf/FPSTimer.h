@@ -1,7 +1,11 @@
 #pragma once
-#include <chrono>
+#ifndef FPSTIMER_H
+#define FPSTIMER_H
+
 extern int g_bAlternateGTCFix;
 
 void FPSStartCounter();
-double GetFPSCounterMiliSeconds_WRAP(bool doUpdate= true);
+double GetFPSCounterMilliseconds_WRAP(bool doUpdate= true);
 DWORD ReturnCounter_WRAP();
+
+#endif

@@ -21,11 +21,11 @@ void __stdcall SafeWrite32(UInt32 addr, UInt32 data) {
 	VirtualProtect((void*)addr, 4, oldProtect, &oldProtect);
 }
 
-void __stdcall SafeWriteBuf(UInt32 addr, void* data, UInt32 len) {
+void __stdcall SafeWriteBuf(UInt32 addr, const void* data, const UInt32 len) {
 	UInt32 oldProtect;
-	VirtualProtect((void*)addr, len, PAGE_EXECUTE_READWRITE, &oldProtect);
-	memcpy((void*)addr, data, len);
-	VirtualProtect((void*)addr, len, oldProtect, &oldProtect);
+	VirtualProtect(reinterpret_cast<void *>(addr), len, PAGE_EXECUTE_READWRITE, &oldProtect);
+	memcpy(reinterpret_cast<void *>(addr), data, len);
+	VirtualProtect(reinterpret_cast<void *>(addr), len, oldProtect, &oldProtect);
 }
 
 void __stdcall WriteRelJump(UInt32 jumpSrc, UInt32 jumpTgt) {

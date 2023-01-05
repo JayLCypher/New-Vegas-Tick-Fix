@@ -3,7 +3,7 @@
 
 #include <intrin.h>
 
-const double
+constexpr double
 kDblZero = 0,
 kDblPI = 3.141592653589793,
 kDblPIx2 = 6.283185307179586,
@@ -18,7 +18,7 @@ kDblTanPId6 = 0.5773502691896257,
 kDblTanPId12 = 0.2679491924311227,
 kDblPId180 = 0.017453292519943295;
 
-const float
+constexpr float
 kFltZero = 0.0F,
 kFltHalf = 0.5F,
 kFltOne = 1.0F,
@@ -67,7 +67,7 @@ union Coordinate {
 	};
 
 	Coordinate() {}
-	Coordinate(SInt16 _x, SInt16 _y) : x(_x), y(_y) {}
+	Coordinate(const SInt16 _x, const SInt16 _y) : y(_y), x(_x) {}
 
 	inline Coordinate& operator =(const Coordinate& rhs) {
 		xy = rhs.xy;

@@ -1,26 +1,20 @@
 
-#include <string>
 #include "nvse/prefix.h"
 #include "nvse/PluginAPI.h"
 #include "internal/utility.h"
-#include "nvse/Utilities.h"
 #include "main.h"
 
-HANDLE MyHandle;
+HANDLE myHandle;
 
-#define NVTF_VERSION 9
+constexpr auto NVTF_VERSION = 9; // #define NVTF_VERSION 9
 extern "C" {
 	BOOL WINAPI DllMain(
-		HANDLE  hDllHandle,
-		DWORD   dwReason,
-		LPVOID  lpreserved
+		const HANDLE  hDllHandle,
+		const DWORD   dwReason,
+		LPVOID  lpreserved // Never used
 	)
 	{
-		switch (dwReason) {
-		case DLL_PROCESS_ATTACH:
-			MyHandle = hDllHandle;
-			break;
-		}
+		if (dwReason == DLL_PROCESS_ATTACH) { myHandle = hDllHandle; }
 		return TRUE;
 	}
 
@@ -55,23 +49,16 @@ extern "C" {
 
 		return true;
 	}
-
-
-
-
-	//think it's done
-	//i guess
-
-
-	bool NVSEPlugin_Load(const NVSEInterface* nvse)
-	{
+	
+	//think it's done //i guess
+	bool NVSEPlugin_Load(const NVSEInterface* nvse) {
 		//DoAprilFoolsStuff(nvse);
-		PrintLog("Base Address %lx", (UInt32)MyHandle);
+		PrintLog("Base Address %lx", reinterpret_cast<UInt32>(myHandle));
 		PrintLog("NVTF Version: %u", NVTF_VERSION);
 		char iniDir[MAX_PATH];
 		PrintLog("LS : 1");
-		GetModuleFileNameA(GetModuleHandle(NULL), iniDir, MAX_PATH);
-		strcpy((char*)(strrchr(iniDir, '\\') + 1), "Data\\NVSE\\Plugins\\NVTF.ini");
+		GetModuleFileNameA(GetModuleHandle(nullptr), iniDir, MAX_PATH);
+		strcpy_s((strrchr(iniDir, '\\') + 1), 27,R"(Data\NVSE\Plugins\NVTF.ini)"); // strcpy((strrchr(iniDir, '\\') + 1), "Data\\NVSE\\Plugins\\NVTF.ini");
 		g_bGTCFix = GetPrivateProfileInt("Main", "bGTCFix", 0, iniDir);
 		g_bAllowBrightnessChangeWindowed = GetPrivateProfileInt("Main", "bAllowBrightnessChangeWindowed", 0, iniDir);
 		g_bFastExit = GetPrivateProfileInt("Main", "bFastExit", 1, iniDir);
