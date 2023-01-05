@@ -41,8 +41,7 @@ void __stdcall NiObjectCSHandler(LPCRITICAL_SECTION cs1, const LPCRITICAL_SECTIO
 #endif
 }
 
-__declspec (naked) DWORD NiObjectCriticalSections(DWORD* ecx)
-{
+__declspec (naked) DWORD NiObjectCriticalSections(DWORD* ecx) {
 	static constexpr DWORD returnAddress = 0x0A62B29;
 	__asm {
 		mov[esi + 8], ebx
@@ -59,8 +58,7 @@ __declspec (naked) DWORD NiObjectCriticalSections(DWORD* ecx)
 	}
 }
 
-__declspec (naked) DWORD someOddCSCall(DWORD* ecx) //CALLED BEFORE
-{
+__declspec (naked) DWORD someOddCSCall(DWORD* ecx) { //CALLED BEFORE
 	static constexpr DWORD returnAddress = 0x0FB334E;
 	__asm {
 		push 4000
@@ -70,8 +68,7 @@ __declspec (naked) DWORD someOddCSCall(DWORD* ecx) //CALLED BEFORE
 	}
 }
 
-__declspec (naked)  DWORD someOddCSCall_2(DWORD* ecx)
-{
+__declspec (naked)  DWORD someOddCSCall_2(DWORD* ecx) {
 	static constexpr DWORD returnAddress = 0xA5B577;
 	__asm {
 		push 2000

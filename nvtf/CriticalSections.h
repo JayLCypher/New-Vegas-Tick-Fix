@@ -41,27 +41,6 @@ DWORD someOddCSCall_2(DWORD* ecx);
 void MemHeapCSHook(DWORD* memHeap);
 void ReturnCSHook();
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 void DoHeapCriticalSectionSpin();
 void RemoveRefCountSafeGuard();
 void RemoveRendererLockSafeGuard();
