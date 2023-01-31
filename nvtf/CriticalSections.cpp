@@ -1,5 +1,5 @@
 #include "CriticalSections.h"
-#include "nvse/SafeWrite.h"
+#include "SafeWrite.h"
 
 ULONG g_iSpinCount;
 
@@ -78,15 +78,15 @@ __declspec (naked)  DWORD someOddCSCall_2(DWORD* ecx) {
 	}
 }
 
-void __stdcall InitCriticalSectionHook(LPCRITICAL_SECTION section) { func_InitCSHandler(section, g_iSpinCount); }
+void __stdcall InitCriticalSectionHook(const LPCRITICAL_SECTION section) { func_InitCSHandler(section, g_iSpinCount); }
 
-void __declspec (naked) MemHeapCSHook(DWORD* MemHeap) { // CALLED BEFORE
-	static const UInt32 RetAddr = 0x0AA8D62;
+void __declspec (naked) MemHeapCSHook(DWORD* memHeap) { // CALLED BEFORE
+	static constexpr UInt32 returnAddress = 0x0AA8D62;
 	__asm {
 		push 4000
 		push edx
 		call func_InitCSHandler
-		jmp RetAddr
+		jmp returnAddress
 	}
 }
 
@@ -193,21 +193,21 @@ void WINAPI hk_EnterCriticalSection_OLD(const LPCRITICAL_SECTION cs) {
 	if (spinCount > 100) { return EnterCriticalSection(cs); }
 	spinCount = 800;
 	unsigned int i = 0;
-	while (i <= 100) {
+	do {
 		if (TryEnterCriticalSection(cs)) { return; }
 		i++;
-	}
-	while (i <= spinCount) {
+	} while (i <= 100);
+	do {
 		if (TryEnterCriticalSection(cs)) { return; }
 		Sleep(0);
 		i++;
-	}
+	} while (i <= spinCount);
 	i = 0;
-	while (i <= spinCount) {
+	do {
 		if (TryEnterCriticalSection(cs)) { return; }
 		Sleep(1);
 		i++;
-	}
+	} while (i <= spinCount);
 	return EnterCriticalSection(cs);
 }
 
@@ -217,19 +217,18 @@ void WINAPI hk_EnterCriticalSection(const LPCRITICAL_SECTION cs) {
 	if (spinCount > minSpinBusy) { return EnterCriticalSection(cs); }
 	spinCount = 1500;
 	unsigned int i = 0;
-	while (i <= spinCount) {
-		if (TryEnterCriticalSection(cs)) return;
+	do {
+		if (TryEnterCriticalSection(cs)) { return; }
 		_mm_pause();
 		if (i > minSpinBusy) { Sleep(0); }
 		i++;
-	}
+	} while (i <= spinCount);
 	return EnterCriticalSection(cs);
 }
 
-
 BOOL WINAPI hk_InitializeCriticalSectionhook(const LPCRITICAL_SECTION cs) {
 	return InitializeCriticalSectionEx(cs, 2400, RTL_CRITICAL_SECTION_FLAG_NO_DEBUG_INFO);
-	cs->SpinCount &= ~(RTL_CRITICAL_SECTION_ALL_FLAG_BITS) | RTL_CRITICAL_SECTION_FLAG_NO_DEBUG_INFO; // Return above.
+	//cs->SpinCount &= ~(RTL_CRITICAL_SECTION_ALL_FLAG_BITS) | RTL_CRITICAL_SECTION_FLAG_NO_DEBUG_INFO; // Return above.
 }
 
 __declspec (naked) void asm_EnterLCSHook() {
@@ -253,8 +252,13 @@ void TweakMiscCriticalSections() {
 	WriteRelCall(0x040FC63, reinterpret_cast<uintptr_t>(asm_EnterLCSHook));
 }
 
+/*
 void __fastcall EnterLightCriticalSectionWrapper(BGSLightCriticalSection* ecx) { ((void(__thiscall*)(BGSLightCriticalSection*, uintptr_t))(0x40FBF0))(ecx, 0); }
 void __fastcall LeaveLightCriticalSectionWrapper(BGSLightCriticalSection* ecx) { ((void(__thiscall*)(BGSLightCriticalSection*))(0x40FBA0))(ecx); }
+ */
+
+void __fastcall EnterLightCriticalSectionWrapper(BGSLightCriticalSection* ecx) { reinterpret_cast<void(__thiscall *)(BGSLightCriticalSection *, uintptr_t)>(0x40FBF0)(ecx, 0); }
+void __fastcall LeaveLightCriticalSectionWrapper(BGSLightCriticalSection* ecx) { reinterpret_cast<void(__thiscall *)(BGSLightCriticalSection *)>(0x40FBA0)(ecx); }
 
 void TurnProblematicCSIntoBusyLocks() {
 	static BGSLightCriticalSection LipFileLCS = {};

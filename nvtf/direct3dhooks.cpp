@@ -1,7 +1,7 @@
-#pragma once
 #include "direct3dhooks.h"
 #include "nvse/SafeWrite.h"
 #include <mutex>
+
 HWND foreWindow = nullptr;
 int g_bToggleTripleBuffering = 0;
 int g_bUseFlipExSwapMode = 0;
@@ -57,8 +57,7 @@ namespace D3DHooks {
 	D3DDISPLAYMODEEX currentDisplayMod;
 	bool currentDisplayModExists = false;
 
-	HRESULT D3DAPI hk_CreateDeviceEx(IDirect3D9Ex* This, const UINT Adapter, const D3DDEVTYPE DeviceType, const HWND hFocusWindow, DWORD BehaviorFlags, D3DPRESENT_PARAMETERS* pPresentationParameters, D3DDISPLAYMODEEX* displayMod, IDirect3DDevice9Ex** ppReturnedDeviceInterface)
-	{
+	HRESULT D3DAPI hk_CreateDeviceEx(IDirect3D9Ex* This, const UINT Adapter, const D3DDEVTYPE DeviceType, const HWND hFocusWindow, DWORD BehaviorFlags, D3DPRESENT_PARAMETERS* pPresentationParameters, D3DDISPLAYMODEEX* displayMod, IDirect3DDevice9Ex** ppReturnedDeviceInterface) {
 		HRESULT hr;
 		if (displayMod) {
 			currentDisplayMod = *displayMod;
@@ -80,30 +79,23 @@ namespace D3DHooks {
 			hr = This->CreateDeviceEx(Adapter, DeviceType, hFocusWindow, BehaviorFlags, pPresentationParameters, displayMod, (IDirect3DDevice9Ex * *)ppReturnedDeviceInterface);
 			
 			PrintLog("Using CreateDeviceEx for device creation\n");
-
-
 		}
 
 		return hr;
 	}
 
-
-	__declspec(naked) void AsmHandleDirectXExCreation()
-	{
-		static const uintptr_t retAddr = 0xE731CA;
+	__declspec(naked) void AsmHandleDirectXExCreation() {
+		static const uintptr_t returnAddress = 0xE731CA;
 		__asm {
 			mov ecx, dword ptr ds : [esi + 0x5C4]
 			push ecx
 			push eax
 			call hk_CreateDeviceEx
-			jmp retAddr
+			jmp returnAddress
 		}
 	}
 
-	bool Game_GetIsMenuMode() {
-		return ((bool(__cdecl*)())(0x0702360))(); // Bruh... What a C-style cast.
-		return true; // Nice fallback bro
-	}
+	bool Game_GetIsMenuMode() { return reinterpret_cast<bool(__cdecl *)()>(0x0702360)(); } // return ((bool(__cdecl*)())(0x0702360))();
 
 	//replace our managed pool for DirectX9 DEFAULT pool, this is bound to cause a significant memory reduction
 	HRESULT __stdcall CreateCubeTextureFromFileInMemoryHookForD3D9(const LPDIRECT3DDEVICE9 pDevice, const LPCVOID pSrcData, const UINT SrcDataSize, LPDIRECT3DCUBETEXTURE9* ppCubeTexture) {
@@ -124,12 +116,12 @@ namespace D3DHooks {
 			const HDC device = ::GetDC(foreWindow);
 			if (!SetGammaRampInit) { GetDeviceGammaRamp(device, &StartingGammaRamp); SetGammaRampInit = true; }
 			SetDeviceGammaRamp(device, pRamp);
-			::ReleaseDC(foreWindow, device);
+			ReleaseDC(foreWindow, device);
 		}
 	}
 
 	void UseD3D9xPatchMemory(const bool bUseDefaultPoolForTextures) {
-		g_iNumBackBuffers = g_iNumBackBuffers > 4 ? 4 : (g_iNumBackBuffers < 1 ? 1 : g_iNumBackBuffers);
+		g_iNumBackBuffers = g_iNumBackBuffers > 4 ? 4 : g_iNumBackBuffers < 1 ? 1 : g_iNumBackBuffers;
 		//SafeWriteBuf(0xE69482, "\x90\x90\x90\x90\x90\x90\x90", 7);
 		WriteRelJump(0xE731C1, reinterpret_cast<UInt32>(AsmHandleDirectXExCreation));
 		SafeWriteBuf(0xE731C6, "\x90\x90\x90\x90\x90", 5);

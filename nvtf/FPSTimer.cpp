@@ -48,8 +48,8 @@ double GetFPSCounterMilliseconds_WRAP(const bool doUpdate) {
 	}
 
 	if (!g_bAlternateGTCFix) {
-		const auto currentCount = static_cast<double>((std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::time_point_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now()).time_since_epoch()))).count()) / 1000000;
-		return (currentCount - QPC::lastCount);
+		const auto currentCount = static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::time_point_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now()).time_since_epoch())).count()) / 1000000;
+		return currentCount - QPC::lastCount;
 	}
 
 	return (static_cast<double>(timeGetTime()) - tGt::lastCount);

@@ -35,7 +35,7 @@ namespace D3DHooks {
 	DWORD __cdecl hk_Direct3DCreate9(bool UseEx);
 	HRESULT D3DAPI hk_CreateDeviceEx(IDirect3D9Ex* This, UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow, DWORD BehaviorFlags, D3DPRESENT_PARAMETERS* pPresentationParameters, D3DDISPLAYMODEEX* displayMod, IDirect3DDevice9Ex** ppReturnedDeviceInterface);
 	void AsmHandleDirectXExCreation();
-	void hk_SetGammaRamp(const LPDIRECT3DDEVICE9 pDevice, const UINT iSwapChain, const DWORD flags, D3DGAMMARAMP* pRamp);
+	void hk_SetGammaRamp(LPDIRECT3DDEVICE9 pDevice, UINT iSwapChain, DWORD flags, D3DGAMMARAMP* pRamp);
 	void UseD3D9xPatchMemory(bool bUseDefaultPoolForTextures);
 }
 

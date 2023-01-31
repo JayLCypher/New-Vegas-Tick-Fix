@@ -120,36 +120,37 @@ inline void __stdcall TimeGlobalHook(void* unused) {
 	//FPSLimit(nullptr);
 	const double delta = GetFPSCounterMilliseconds_WRAP();
 	//FPSLimitClock = std::chrono::steady_clock::now();
-	if (g_bfMaxTime) { *fMaxTime = (delta > FLT_EPSILON) ? (delta < DesiredMin ? (delta > DesiredMax ? static_cast<float>(delta / 1000.0) : static_cast<float>(DesiredMax / 1000.0)) : static_cast<float>(DesiredMin / 1000.0)) : static_cast<float>(fLowerMaxTimeBoundary / 1000) ;}
+	if (g_bfMaxTime) { *fMaxTime = static_cast<float>(delta > FLT_EPSILON ? delta < DesiredMin ? delta > DesiredMax ? delta / 1000.0 : DesiredMax / 1000.0 : DesiredMin / 1000.0 : fLowerMaxTimeBoundary / 1000.0); }
 
-	if (!*g_IsMenuMode || !(!*g_DialogMenu2 && !*g_DialogMenu)) { *g_FPSGlobal = delta > 0.0 ? (delta < DesiredMin ? (delta > DesiredMax ? static_cast<float>(delta) : static_cast<float>(DesiredMax)) : static_cast<float>(DesiredMin)) : 0.0f; }
-	else { *g_FPSGlobal = 0; }
+	if (!*g_IsMenuMode || !(!*g_DialogMenu2 && !*g_DialogMenu)) { *g_FPSGlobal = static_cast<float>(delta > 0.0 ? delta < DesiredMin ? delta > DesiredMax ? delta : DesiredMax : DesiredMin : 0.0); }
+	else { *g_FPSGlobal = 0.0f; }
 
 	if (g_bSpiderHandsFix > 0 && *g_FPSGlobal > FLT_EPSILON) {
-		*g_FPSGlobal = 1000 / (1000 / *g_FPSGlobal * fTimerOffsetMult);
+		*g_FPSGlobal /= fTimerOffsetMult;
 		if (g_bfMaxTime) {
-			*fMaxTime = 1000 / ((1000 / *fMaxTime) * fTimerOffsetMult);
+			*fMaxTime /= fTimerOffsetMult;
 			if (*fMaxTime < FLT_EPSILON) { *fMaxTime = FLT_EPSILON; }
-			//	if (*fMaxTime > ((DesiredMin / 1000))) *fMaxTime = ((DesiredMin / 1000));
 		}
 	}
-	if (g_bfMaxTime && *fMaxTime > static_cast<float>(fLowerMaxTimeBoundary / 1000.0)) *fMaxTime = static_cast<float>(fLowerMaxTimeBoundary / 1000.0); //clamp to fix, will do properly later
+	if (g_bfMaxTime) { *fMaxTime = *fMaxTime > static_cast<float>(fLowerMaxTimeBoundary / 1000.0) ? static_cast<float>(fLowerMaxTimeBoundary / 1000.0) : *fMaxTime; } // Clamp
+	//if (g_bfMaxTime && *fMaxTime > static_cast<float>(fLowerMaxTimeBoundary / 1000.0)) { *fMaxTime = static_cast<float>(fLowerMaxTimeBoundary / 1000.0); }
 }
 
 inline void __stdcall TimeGlobalHook_NoSafeGuards(void* unused) {
-	const double Delta = GetFPSCounterMilliseconds_WRAP();
-	if (g_bfMaxTime) { *fMaxTime = Delta > 0 && Delta < fLowerMaxTimeBoundary ? (Delta > DesiredMax ? static_cast<float>(Delta / 1000.0) : static_cast<float>(DesiredMax / 1000.0)) : static_cast<float>(fLowerMaxTimeBoundary / 1000.0); }
+	const double delta = GetFPSCounterMilliseconds_WRAP();
+	if (g_bfMaxTime) { *fMaxTime = static_cast<float>(delta > 0 && delta < fLowerMaxTimeBoundary ? delta > DesiredMax ? delta / 1000.0 : DesiredMax / 1000.0 : fLowerMaxTimeBoundary / 1000.0); }
 
-	*g_FPSGlobal = Delta > 0.0 ? (Delta < DesiredMin ? (Delta > DesiredMax ? static_cast<float>(Delta) : static_cast<float>(DesiredMax)) : static_cast<float>(DesiredMin)) : 0.0f;
+	*g_FPSGlobal = static_cast<float>(delta > 0.0 ? delta < DesiredMin ? delta > DesiredMax ? delta : DesiredMax : DesiredMin : 0.0);
 
 	if (g_bSpiderHandsFix > 0 && *g_FPSGlobal > FLT_EPSILON) {
-		*g_FPSGlobal /= fTimerOffsetMult; // Eat it Karut. // *g_FPSGlobal = 1000 / (1000 / *g_FPSGlobal * fTimerOffsetMult);
+		*g_FPSGlobal /= fTimerOffsetMult; // Eat it carxt.
 		if (g_bfMaxTime) {
-			*fMaxTime /= fTimerOffsetMult; // Again??? // *fMaxTime = 1000 / ((1000 / *fMaxTime) * fTimerOffsetMult);
+			*fMaxTime /= fTimerOffsetMult; // Again???
 			if (*fMaxTime < FLT_EPSILON) { *fMaxTime = FLT_EPSILON; }
 		}
 	}
-	if (g_bfMaxTime && *fMaxTime > static_cast<float>(fLowerMaxTimeBoundary / 1000.0)) *fMaxTime = static_cast<float>(fLowerMaxTimeBoundary / 1000.0); //clamp to fix, will do properly later
+	if (g_bfMaxTime) { *fMaxTime = *fMaxTime > static_cast<float>(fLowerMaxTimeBoundary / 1000.0) ? static_cast<float>(fLowerMaxTimeBoundary / 1000.0) : *fMaxTime; } // Clamp
+	//if (g_bfMaxTime && *fMaxTime > static_cast<float>(fLowerMaxTimeBoundary / 1000.0)) *fMaxTime = static_cast<float>(fLowerMaxTimeBoundary / 1000.0); //clamp to fix, will do properly later
 }
 
 //test function, can be left out
@@ -174,8 +175,7 @@ DWORD hk_GetTickCount()
 }
 */
 
-inline __declspec (naked) void asm_FPSTrailHook()
-{
+inline __declspec (naked) void asm_FPSTrailHook() {
 	__asm {
 		pop esi
 		mov esp, ebp
@@ -186,17 +186,16 @@ inline __declspec (naked) void asm_FPSTrailHook()
 
 static uintptr_t FPSFix_TimeHookCall = NULL;
 inline void HookFPSStuff() {
-
 	//WriteRelJump(0x086EF2B, (uintptr_t)asm_FPSTrailHook);
 	//OriginalDisplayCall = (*(uintptr_t*)0x10EE640);
 	//SafeWrite32(0x10EE640, (uintptr_t)FPSLimt);
 	//SafeWriteBuf(0x86E65A, "\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90\x90", 0x11);
 	if (!g_bRemoveGTCLimits) { FPSFix_TimeHookCall = reinterpret_cast<uintptr_t>(TimeGlobalHook); }
 	else { FPSFix_TimeHookCall = reinterpret_cast<uintptr_t>(TimeGlobalHook_NoSafeGuards); }
-	if (FPSFix_TimeHookCall) WriteRelCall(static_cast<uintptr_t>(0x086E667), FPSFix_TimeHookCall);
+	if (FPSFix_TimeHookCall) { WriteRelCall(static_cast<uintptr_t>(0x086E667), FPSFix_TimeHookCall); }
 }
 
-inline void __stdcall SleepHook(DWORD dwMilliseconds) {
+inline void __stdcall SleepHook(const DWORD dwMilliseconds) {
 	if (dwMilliseconds <= 0) { SwitchToThread(); }
 	Sleep(dwMilliseconds);
 }
@@ -204,19 +203,18 @@ inline void __stdcall SleepHook(DWORD dwMilliseconds) {
 inline void DoPatches() {
 	if (g_bAllowDirectXDebugging) { SafeWriteBuf(0x09F9968, "\xC2\x04\x00\xCC\xCC\xCC", 6); } //SafeWriteBuf(0x4DAD61, "\x90\x90\x90\x90\x90\x90\x90", 7);
 	if (g_bEnableThreadingTweaks) {
-		if (g_bRemoveRCSafeGuard)	RemoveRefCountSafeGuard();
+		if (g_bRemoveRCSafeGuard) { RemoveRefCountSafeGuard(); }
 		//if (g_bRemoveRendererLockSafeGuard) RemoveRendererLockSafeGuard();
-		if (g_bTweakMiscCriticalSections) TweakMiscCriticalSections();
+		if (g_bTweakMiscCriticalSections) { TweakMiscCriticalSections(); }
 		//	SafeWriteBuf(0x8728D7, "\x8B\xE5\x5D\xC3\x90\x90", 6);
-		if (g_bReplaceDeadlockCSWithWaitAndSleep) TurnProblematicCSIntoBusyLocks();
+		if (g_bReplaceDeadlockCSWithWaitAndSleep) { TurnProblematicCSIntoBusyLocks(); }
 	}
 
 	//Fast Exit Hook
 	if (g_bFastExit) { WriteRelJump(0x86B66E, reinterpret_cast<UInt32>(FastExit)); } // WriteRelJump(0x86B66E, (UInt32)FastExit);
 	if (g_bRedoHashtables) { DoHashTableStuff(); }
 
-	if (g_bAllowBrightnessChangeWindowed)
-	{
+	if (g_bAllowBrightnessChangeWindowed) {
 		WriteRelCall(0x4DD119, reinterpret_cast<UInt32>(D3DHooks::hk_SetGammaRamp));
 		for (UInt32 patchAddr : {0x5B6CA6, 0x7D0C3E, 0x86A38B}) { WriteRelCall(patchAddr, reinterpret_cast<UInt32>(hk_OSGlobalsExit)); }
 	}
@@ -225,9 +223,9 @@ inline void DoPatches() {
 		//timeBeginPeriod(1);
 		//SafeWrite32(0xFDF060, (UInt32)timeGetTime);
 		FPSStartCounter();
-		const auto TargetGTC = reinterpret_cast<UInt32>(ReturnCounter_WRAP);
+		const auto targetGTC = reinterpret_cast<UInt32>(ReturnCounter_WRAP);
 		if (g_bAlternateGTCFix) { timeBeginPeriod(1); }
-		SafeWrite32(0xFDF060, TargetGTC);
+		SafeWrite32(0xFDF060, targetGTC);
 		//SafeWrite32(0xFDF060, (UInt32)hk_GetTickCount);
 		if (g_bFPSFix) {
 			PrintLog("FPSFIX ENABLED");

@@ -1,18 +1,15 @@
 
-#include "nvse/prefix.h"
-#include "nvse/PluginAPI.h"
+#include "prefix.h"
+#include "PluginAPI.h"
 #include "internal/utility.h"
 #include "main.h"
 
 HANDLE myHandle;
 
-constexpr auto NVTF_VERSION = 10; // #define NVTF_VERSION 10
+constexpr auto NVTF_VERSION = 10;
+
 extern "C" {
-	BOOL WINAPI DllMain(
-		const HANDLE  hDllHandle,
-		const DWORD   dwReason,
-		LPVOID  lpreserved // Never used
-	) {
+	BOOL WINAPI DllMain(const HANDLE hDllHandle, const DWORD dwReason, LPVOID lpreserved) { // lpreserved Never used
 		if (dwReason == DLL_PROCESS_ATTACH) { myHandle = hDllHandle; }
 		return TRUE;
 	}
@@ -28,18 +25,17 @@ extern "C" {
 			return false;
 		}
 
-		if (!nvse->isEditor) {
-			if (nvse->runtimeVersion < RUNTIME_VERSION_1_4_0_525) {
-				PrintLog("ERROR: incorrect runtime version (got %08X need at least %08X)", nvse->runtimeVersion, RUNTIME_VERSION_1_4_0_525);
-				return false;
-			}
+		if (nvse->isEditor) { return false; }
 
-			if (nvse->isNogore) {
-				PrintLog("ERROR: incorrect runtime edition (got %08X need %08X (standard))", nvse->isNogore, 0);
-				return false;
-			}
+		if (nvse->runtimeVersion < RUNTIME_VERSION_1_4_0_525) {
+			PrintLog("ERROR: incorrect runtime version (got %08X need at least %08X)", nvse->runtimeVersion, RUNTIME_VERSION_1_4_0_525);
+			return false;
 		}
-		else return false;
+
+		if (nvse->isNogore) {
+			PrintLog("ERROR: incorrect runtime edition (got %08X need %08X (standard))", nvse->isNogore, 0);
+			return false;
+		}
 
 		return true;
 	}
@@ -103,5 +99,4 @@ extern "C" {
 		DoPatches();
 		return true;
 	}
-
 };

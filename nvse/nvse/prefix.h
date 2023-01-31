@@ -1,4 +1,6 @@
 #pragma once
+#ifndef PREFIX_H
+#define PREFIX_H
 
 // 4018 - signed/unsigned mismatch
 // 4244 - loss of data by assignment
@@ -34,3 +36,5 @@ template <> struct StaticAssertFailure <true> { enum { a = 1 }; };
 template <int x> struct static_assert_test {};
 
 #define STATIC_ASSERT(a)	typedef static_assert_test <sizeof(StaticAssertFailure<(bool)(a)>)> static_assert_typedef_ ## __COUNTER__
+
+#endif

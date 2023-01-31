@@ -3,7 +3,7 @@
 #define CRITICAL_SECTION_H
 
 extern ULONG g_iSpinCount;
-extern void __stdcall SafeWrite8(UInt32 addr, UInt32 data);
+extern void __stdcall SafeWrite8(UInt32 address, UInt32 data);
 extern void PrintLog(const char* fmt, ...);
 
 struct MemoryHeap {
@@ -29,7 +29,6 @@ struct HeapManager {
 struct BGSLightCriticalSection {
 	uintptr_t OwningThreadId = 0;
 	uintptr_t LockCount = 0;
-
 };
 
 void __stdcall InitCriticalSectionHook(LPCRITICAL_SECTION section);
