@@ -66,7 +66,9 @@ extern "C" {
 		g_bfMaxTime = GetPrivateProfileInt("FPSFix", "bfMaxTime", 1, iniDir);
 		g_bResizeHashtables = GetPrivateProfileInt("Hashtables", "bResizeHashtables", 1, iniDir);
 		// bRemoveRCSafeGuard and bRemove0x80SafeGuard are left as legacy names
-		g_bRemoveRCSafeGuard = GetPrivateProfileInt("ThreadingTweaks", "bRemoveRCSafeGuard", 0, iniDir);
+		g_iTweakRCSafeGuard = GetPrivateProfileInt("ThreadingTweaks", "iTweakRCSafeGuard", 0, iniDir);
+		g_bTweakMiscRendererSafeGuards = GetPrivateProfileInt("ThreadingTweaks", "bTweakMiscRendererSafeGuard", 0, iniDir);
+
 		g_bTweakMiscCriticalSections= GetPrivateProfileInt("ThreadingTweaks", "bTweakMiscCriticalSections", 0, iniDir);
 		g_bReplaceDeadlockCSWithWaitAndSleep = GetPrivateProfileInt("ThreadingTweaks", "bReplaceDeadlockCSWithWaitAndSleep", 0, iniDir);
 

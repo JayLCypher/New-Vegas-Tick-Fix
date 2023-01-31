@@ -41,8 +41,8 @@ void MemHeapCSHook(DWORD* memHeap);
 void ReturnCSHook();
 
 void DoHeapCriticalSectionSpin();
-void RemoveRefCountSafeGuard();
-void RemoveRendererLockSafeGuard();
+void TweakRefCountSafeGuard(int mode);
+void TweakRendererLockSafeGuard();
 void TweakMiscCriticalSections();
 void TurnProblematicCSIntoBusyLocks();
 

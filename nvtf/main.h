@@ -2,6 +2,48 @@
 #ifndef MAIN_H
 #define MAIN_H
 
+
+float* g_FPSGlobal = (float*)(0x11F6398);
+UINT32 LastTime;
+UINT32 OriginalFunction;
+float* fMaxTime = (float*)0x1267B38;
+bool initTimeHook = false;
+float fLowerMaxTimeBoundary = 0;
+DWORD* InterfSingleton = (DWORD*)0x11D8A80;
+
+
+int g_bGTCFix = 0;
+int g_bAllowDirectXDebugging = 0;
+int g_bAllowBrightnessChangeWindowed = 0;
+int g_bFastExit = 0;
+int g_bFPSFix = 0;
+int g_iMaxFPS = 1;
+int g_iMinFPS = 1;
+int g_bfMaxTime;
+int g_bEnableThreadingTweaks = 0;
+int g_iTweakRCSafeGuard = 0;
+int g_bTweakMiscRendererSafeGuards = 0;
+int g_bTweakMiscCriticalSections = 0;
+int g_bReplaceDeadlockCSWithWaitAndSleep = 0;
+int g_bSpiderHandsFix = 0;
+double	DesiredMax = 1;
+double	DesiredMin = 1000;
+double	HavokMax = 1;
+double	HavokMin = 1;
+int g_bModifyDirectXBehavior = 1;
+int g_bRedoHashtables = 0;
+int g_bResizeHashtables = 1;
+int g_bAlternateGTCFix = 0;
+int g_bRemoveGTCLimits = 0;
+int g_bAutomaticFPSFix = 0;
+int g_bUseExperimentalCacheForBuffers = 0;
+int g_bWaterLODPatch = 0;
+
+
+
+
+
+
 #include <thread>
 #include "SafeWrite.h"
 #include "hooks.h"
@@ -203,11 +245,12 @@ inline void __stdcall SleepHook(const DWORD dwMilliseconds) {
 inline void DoPatches() {
 	if (g_bAllowDirectXDebugging) { SafeWriteBuf(0x09F9968, "\xC2\x04\x00\xCC\xCC\xCC", 6); } //SafeWriteBuf(0x4DAD61, "\x90\x90\x90\x90\x90\x90\x90", 7);
 	if (g_bEnableThreadingTweaks) {
-		if (g_bRemoveRCSafeGuard) { RemoveRefCountSafeGuard(); }
+		TweakRefCountSafeGuard(g_iTweakRCSafeGuard);
 		//if (g_bRemoveRendererLockSafeGuard) RemoveRendererLockSafeGuard();
 		if (g_bTweakMiscCriticalSections) { TweakMiscCriticalSections(); }
 		//	SafeWriteBuf(0x8728D7, "\x8B\xE5\x5D\xC3\x90\x90", 6);
-		if (g_bReplaceDeadlockCSWithWaitAndSleep) { TurnProblematicCSIntoBusyLocks(); }
+		if (g_bReplaceDeadlockCSWithWaitAndSleep) TurnProblematicCSIntoBusyLocks();
+		if (g_bTweakMiscRendererSafeGuards) TweakRendererLockSafeGuard();
 	}
 
 	//Fast Exit Hook
